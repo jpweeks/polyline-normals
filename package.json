@@ -13,14 +13,17 @@
     "polyline-miter-util": "^1.0.1"
   },
   "devDependencies": {
-    "gl-vec2": "^1.0.0",
     "adaptive-bezier-curve": "^1.0.3",
     "arc-to": "^1.0.0",
+    "array-pack-2d": "^0.1.1",
+    "budo": "^8.0.4",
     "canvas-testbed": "^1.0.3",
     "domready": "^1.0.7",
+    "gl-vec2": "^1.0.0",
     "inherits": "^2.0.1"
   },
   "scripts": {
+    "start": "budo test-2d.js --live",
     "test": "node test.js"
   },
   "keywords": [
