@@ -6,13 +6,14 @@ var curve = require('adaptive-bezier-curve')
 var pack = require('array-pack-2d')
 var createNormalizer = require('./')
 
-var paths = []
-paths.push([[40, 40], [80, 30], [80, 60], [125, 33], [115, 100], [50, 120], [70, 150]])
-paths.push({ path: circle(130, 120, 25), closed: true })
-paths.push(curve([40, 40], [70, 100], [120, 20], [200, 40], 5))
-paths.push({ path: [ [0, 122], [0, 190], [90, 190] ], closed: true })
-paths.push({ path: [ [50, 50], [100, 50], [100, 100], [50, 100] ], closed: true })
-paths.push([[30, -60], [80, 10]])
+var paths = [
+  { path: [[40, 40], [80, 30], [80, 60], [125, 33], [115, 100], [50, 120], [70, 150]] },
+  { path: circle(130, 120, 25), closed: true },
+  { path: curve([40, 40], [70, 100], [120, 20], [200, 40], 5) },
+  { path: [ [0, 122], [0, 190], [90, 190] ], closed: true },
+  { path: [ [50, 50], [100, 50], [100, 100], [50, 100] ], closed: true },
+  { path: [[30, -60], [80, 10]] },
+]
 
 function circle(x, y, radius) {
   // in this case arc-to closes itself by making the
@@ -29,13 +30,14 @@ function render(ctx, width, height) {
   // draw each path with a bit of an offset
   ctx.save()
   paths.forEach(function (data, i) {
-    var path = Array.isArray(data) ? data : data.path
-    var closed = typeof data === 'object' && data.closed
+    var path = data.path
+    var closed = !!data.closed
     var packedPath = pack(path)
 
     var cols = 3
-    var x = i % cols,
-      y = ~~(i / cols)
+    var x = i % cols
+    var y = ~~(i / cols)
+
     ctx.translate(x * 50, y * 50)
     draw(ctx, packedPath, closed)
   })
@@ -49,8 +51,8 @@ function draw(ctx, path, closed) {
 
   var pos = [0, 0]
   var norm = [0, 0]
+  var len = [0, 0]
   var tmp = [0, 0]
-  var len = 0
   var ix, iy;
 
   var top = []
@@ -71,18 +73,18 @@ function draw(ctx, path, closed) {
 
     vec.set(pos, path[ix], path[iy])
     vec.set(norm, normals[ix], normals[iy])
-    len = miters[i]
+    vec.set(len, miters[ix], miters[iy])
 
     ctx.fillStyle = 'black'
     ctx.fillRect(pos[0] - psize / 2, pos[1] - psize / 2, psize, psize)
 
     ctx.beginPath()
-    vec.scaleAndAdd(tmp, pos, norm, len * halfThick)
+    vec.scaleAndAdd(tmp, pos, norm, len[0] * halfThick)
     ctx.moveTo(pos[0], pos[1])
     ctx.lineTo(tmp[0], tmp[1])
     top.push(tmp.slice())
 
-    vec.scaleAndAdd(tmp, pos, norm, -len * halfThick)
+    vec.scaleAndAdd(tmp, pos, norm, len[1] * halfThick)
     ctx.moveTo(pos[0], pos[1])
     ctx.lineTo(tmp[0], tmp[1])
     ctx.stroke()
@@ -92,12 +94,12 @@ function draw(ctx, path, closed) {
   if (closed) {
     vec.set(pos, path[0], path[1])
     vec.set(norm, normals[0], normals[1])
-    len = miters[0]
+    vec.set(len, miters[0], miters[1])
 
-    vec.scaleAndAdd(tmp, pos, norm, len * halfThick)
+    vec.scaleAndAdd(tmp, pos, norm, len[0] * halfThick)
     top.push(tmp.slice())
 
-    vec.scaleAndAdd(tmp, pos, norm, -len * halfThick)
+    vec.scaleAndAdd(tmp, pos, norm, len[1] * halfThick)
     bot.push(tmp.slice())
   }
 
