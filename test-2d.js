@@ -15,9 +15,9 @@ paths.push( { path: [ [50, 50], [100, 50], [100, 100], [50, 100] ], closed: true
 paths.push( [ [30, -60], [80, 10] ] )
 
 function circle(x, y, radius) {
-    //in this case arc-to closes itself by making the
-    //last point equal to the first. we want to fix this
-    //to pass in a more typical polyline and get the right normals
+    // in this case arc-to closes itself by making the
+    // last point equal to the first. we want to fix this
+    // to pass in a more typical polyline and get the right normals
     var c = arc(x, y, radius, 0, Math.PI*2, false)
     c.pop()
     return c
@@ -56,19 +56,14 @@ function draw(ctx, path, closed) {
     var top = []
     var bot = []
 
-    //get the normals of the path
-    var normalizer = createNormalizer(path.length / 2)
+    // get the normals of the path
+    var pointCount = path.length / 2
+    var normalizer = createNormalizer(pointCount)
     var normals = normalizer.normals
     var miters = normalizer.miters
     normalizer.update(path, closed)
 
-    //for drawing the join, we can just add the first point
-    // if (closed) {
-    //     path.push(path[0])
-    //     normals.push(normals[0])
-    // }
-
-    //draw our expanded vertices for each point in the path
+    // draw our expanded vertices for each point in the path
     ctx.globalAlpha = 0.15
     for (var i = 0, il = path.length / 2; i < il; i++) {
         ix = i * 2
@@ -94,7 +89,19 @@ function draw(ctx, path, closed) {
         bot.push(tmp.slice())
     }
 
-    //edges
+    if (closed) {
+        vec.set(pos, path[0], path[1])
+        vec.set(norm, normals[0], normals[1])
+        len = miters[0]
+
+        vec.scaleAndAdd(tmp, pos, norm, len * halfThick)
+        top.push(tmp.slice())
+
+        vec.scaleAndAdd(tmp, pos, norm, -len * halfThick)
+        bot.push(tmp.slice())
+    }
+
+    // edges
     ctx.globalAlpha = 1
     ctx.beginPath()
     top.forEach(function(t) {
