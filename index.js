@@ -1,4 +1,8 @@
-var util = require('polyline-miter-util')
+import {
+  direction as polyDirection,
+  normal as polyNormal,
+  computeMiter
+} from 'polyline-miter-util'
 
 function createFloatBuffer (size) {
   return new Float32Array(size)
@@ -14,37 +18,37 @@ function setVec2 (out, x, y) {
   return out
 }
 
-function copyToVec2 (out, buffer, i) {
-  var ix = i * 2
-  var iy = ix + 1
-  out[0] = buffer[ix]
-  out[1] = buffer[iy]
-  return out
+function copyToVec2 (vectorOut, bufferIn, i) {
+  const ix = i * 2
+  const iy = ix + 1
+  vectorOut[0] = bufferIn[ix]
+  vectorOut[1] = bufferIn[iy]
+  return vectorOut
 }
 
-function copyFromVec2 (out, vec, i) {
-  var ix = i * 2
-  var iy = ix + 1
-  out[ix] = vec[0]
-  out[iy] = vec[1]
-  return out
+function copyFromVec2 (bufferOut, vectorIn, i) {
+  const ix = i * 2
+  const iy = ix + 1
+  bufferOut[ix] = vectorIn[0]
+  bufferOut[iy] = vectorIn[1]
+  return bufferOut
 }
 
-module.exports = function createBuilder (size) {
-  var cur = createVec2()
-  var prev = createVec2()
-  var next = createVec2()
-  var curNormal = createVec2()
+export default function createNormalizer (maxSize) {
+  const cur = createVec2()
+  const prev = createVec2()
+  const next = createVec2()
+  const curNormal = createVec2()
 
-  var lineA = createVec2()
-  var lineB = createVec2()
-  var tangent = createVec2()
-  var miter = createVec2()
-  var miterLengths = createVec2()
+  const lineA = createVec2()
+  const lineB = createVec2()
+  const tangent = createVec2()
+  const miter = createVec2()
+  const miterLengths = createVec2()
 
-  var normals = createFloatBuffer(size * 2)
-  var miters = createFloatBuffer(size)
-  var normalIndex, miterIndex
+  const normals = createFloatBuffer(maxSize * 2)
+  const miters = createFloatBuffer(maxSize)
+  let normalIndex, miterIndex
 
   function resetBufferIndices () {
     normalIndex = 0
@@ -57,60 +61,60 @@ module.exports = function createBuilder (size) {
     miters[miterIndex++] = length
   }
 
-  function computeSegment (points, ai, bi, ci) {
-    var hasNext = ai < size - 1
-    var miterLen
+  function computeSegment (points, size, ai, bi, ci) {
+    const hasNext = ai < size - 1
 
     copyToVec2(cur, points, ai)
     copyToVec2(prev, points, bi)
-    util.direction(lineA, cur, prev)
-    util.normal(curNormal, lineA)
+    polyDirection(lineA, cur, prev)
+    polyNormal(curNormal, lineA)
 
     if (ai === 1) {
-      miterLen = 1
+      const miterLen = 1
       addNext(curNormal, miterLen)
     }
 
     if (hasNext) {
       copyToVec2(next, points, ci)
-      util.direction(lineB, next, cur)
-      miterLen = util.computeMiter(tangent, miter, lineA, lineB, 1)
+      polyDirection(lineB, next, cur)
+      const miterLen = computeMiter(tangent, miter, lineA, lineB, 1)
       addNext(miter, miterLen)
     } else {
-      miterLen = 1
+      const miterLen = 1
       addNext(curNormal, miterLen)
     }
   }
 
-  function correctClosedNormal (points, ai, bi, ci) {
+  function correctClosedNormal (points, size, ai, bi, ci) {
     copyToVec2(cur, points, ai)
     copyToVec2(prev, points, bi)
     copyToVec2(next, points, ci)
 
-    util.direction(lineA, cur, prev)
-    util.direction(lineB, next, cur)
-    util.normal(curNormal, lineA)
+    polyDirection(lineA, cur, prev)
+    polyDirection(lineB, next, cur)
+    polyNormal(curNormal, lineA)
 
-    var miterLen = util.computeMiter(tangent, miter, lineA, lineB, 1)
+    const miterLen = computeMiter(tangent, miter, lineA, lineB, 1)
     copyFromVec2(normals, miter, ai)
     miters[ai] = miterLen
   }
 
   function update (points, closed) {
+    const size = points.length / 2
     resetBufferIndices()
 
-    for (var i = 1; i < size; i++) {
-      computeSegment(points, i, i - 1, i + 1)
+    for (let i = 1; i < size; i++) {
+      computeSegment(points, size, i, i - 1, i + 1)
     }
     if (size > 2 && closed) {
-      correctClosedNormal(points, 0, size - 1, 1)
-      correctClosedNormal(points, size - 1, size - 2, 0)
+      correctClosedNormal(points, size, 0, size - 1, 1)
+      correctClosedNormal(points, size, size - 1, size - 2, 0)
     }
   }
 
   return {
-    normals: normals,
-    miters: miters,
-    update: update
+    normals,
+    miters,
+    update
   }
 }
