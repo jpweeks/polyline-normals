@@ -1,5 +1,5 @@
-require('canvas-testbed')(render, { once: true })
-
+var createContext = require('2d-context')
+var createLoop = require('canvas-fit-loop')
 var vec = require('gl-vec2')
 var arc = require('arc-to')
 var curve = require('adaptive-bezier-curve')
@@ -15,7 +15,22 @@ var paths = [
   { path: [[30, -60], [80, 10]] },
 ]
 
-function circle(x, y, radius) {
+var ctx = createContext()
+var app = createLoop(ctx.canvas, {
+  scale: window.devicePixelRatio
+})
+
+app.on('resize', function () {
+  var width = app.shape[0]
+  var height = app.shape[1]
+
+  render(ctx, width, height)
+})
+
+render(ctx, window.innerWidth, window.innerHeight)
+document.body.appendChild(ctx.canvas)
+
+function circle (x, y, radius) {
   // in this case arc-to closes itself by making the
   // last point equal to the first. we want to fix this
   // to pass in a more typical polyline and get the right normals
@@ -24,7 +39,9 @@ function circle(x, y, radius) {
   return c
 }
 
-function render(ctx, width, height) {
+function render (ctx, width, height) {
+  var scale = app.scale
+  ctx.setTransform(scale, 0, 0, scale, 0, 0)
   ctx.clearRect(0, 0, width, height)
 
   // draw each path with a bit of an offset
@@ -44,16 +61,15 @@ function render(ctx, width, height) {
   ctx.restore()
 }
 
-function draw(ctx, path, closed) {
+function draw (ctx, path, closed) {
   var thick = 25
   var halfThick = thick / 2
   var psize = 4
 
   var pos = [0, 0]
   var norm = [0, 0]
-  var len = [0, 0]
   var tmp = [0, 0]
-  var ix, iy;
+  var len, ix, iy
 
   var top = []
   var bot = []
@@ -73,18 +89,18 @@ function draw(ctx, path, closed) {
 
     vec.set(pos, path[ix], path[iy])
     vec.set(norm, normals[ix], normals[iy])
-    vec.set(len, miters[ix], miters[iy])
+    len = miters[i]
 
     ctx.fillStyle = 'black'
     ctx.fillRect(pos[0] - psize / 2, pos[1] - psize / 2, psize, psize)
 
     ctx.beginPath()
-    vec.scaleAndAdd(tmp, pos, norm, len[0] * halfThick)
+    vec.scaleAndAdd(tmp, pos, norm, len * halfThick)
     ctx.moveTo(pos[0], pos[1])
     ctx.lineTo(tmp[0], tmp[1])
     top.push(tmp.slice())
 
-    vec.scaleAndAdd(tmp, pos, norm, len[1] * halfThick)
+    vec.scaleAndAdd(tmp, pos, norm, -len * halfThick)
     ctx.moveTo(pos[0], pos[1])
     ctx.lineTo(tmp[0], tmp[1])
     ctx.stroke()
@@ -94,12 +110,12 @@ function draw(ctx, path, closed) {
   if (closed) {
     vec.set(pos, path[0], path[1])
     vec.set(norm, normals[0], normals[1])
-    vec.set(len, miters[0], miters[1])
+    len = miters[0]
 
-    vec.scaleAndAdd(tmp, pos, norm, len[0] * halfThick)
+    vec.scaleAndAdd(tmp, pos, norm, len * halfThick)
     top.push(tmp.slice())
 
-    vec.scaleAndAdd(tmp, pos, norm, len[1] * halfThick)
+    vec.scaleAndAdd(tmp, pos, norm, -len * halfThick)
     bot.push(tmp.slice())
   }
 

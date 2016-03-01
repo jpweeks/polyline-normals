@@ -43,7 +43,7 @@ module.exports = function createBuilder (size) {
   var miterLengths = createVec2()
 
   var normals = createFloatBuffer(size * 2)
-  var miters = createFloatBuffer(size * 2)
+  var miters = createFloatBuffer(size)
   var normalIndex, miterIndex
 
   function resetBufferIndices () {
@@ -55,7 +55,6 @@ module.exports = function createBuilder (size) {
     normals[normalIndex++] = normal[0]
     normals[normalIndex++] = normal[1]
     miters[miterIndex++] = length
-    miters[miterIndex++] = -length
   }
 
   function computeSegment (points, ai, bi, ci) {
@@ -93,9 +92,8 @@ module.exports = function createBuilder (size) {
     util.normal(curNormal, lineA)
 
     var miterLen = util.computeMiter(tangent, miter, lineA, lineB, 1)
-    setVec2(miterLengths, miterLen, -miterLen)
     copyFromVec2(normals, miter, ai)
-    copyFromVec2(miters, miterLengths, ai)
+    miters[ai] = miterLen
   }
 
   function update (points, closed) {
