@@ -12,9 +12,9 @@ const paths = [
   { path: curve([40, 40], [70, 100], [120, 20], [200, 40], 5) },
   { path: [ [0, 122], [0, 190], [90, 190] ], closed: true },
   { path: [ [50, 50], [100, 50], [100, 100], [50, 100] ], closed: true },
-  { path: [[30, -60], [80, 10]] },
+  { path: [[30, -60], [80, 10]] }
 ]
-const pathLengths = paths.map(p => p.path.length)
+const pathLengths = paths.map((p) => p.path.length)
 const pathMaxLength = Math.max.apply(null, pathLengths)
 const normalizer = createNormalizer(pathMaxLength)
 
@@ -37,7 +37,7 @@ function circle (x, y, radius) {
   // in this case arc-to closes itself by making the
   // last point equal to the first. we want to fix this
   // to pass in a more typical polyline and get the right normals
-  const c = arc(x, y, radius, 0, Math.PI*2, false)
+  const c = arc(x, y, radius, 0, Math.PI * 2, false)
   c.pop()
   return c
 }
@@ -122,13 +122,13 @@ function draw (ctx, path, closed) {
   // edges
   ctx.globalAlpha = 1
   ctx.beginPath()
-  top.forEach(function(t) {
+  top.forEach(function (t) {
     ctx.lineTo(t[0], t[1])
   })
   ctx.stroke()
 
   ctx.beginPath()
-  bot.forEach(function(t) {
+  bot.forEach(function (t) {
     ctx.lineTo(t[0], t[1])
   })
   ctx.stroke()

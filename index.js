@@ -12,12 +12,6 @@ function createVec2 () {
   return new Float32Array(2)
 }
 
-function setVec2 (out, x, y) {
-  out[0] = x
-  out[1] = y
-  return out
-}
-
 function copyToVec2 (vectorOut, bufferIn, i) {
   const ix = i * 2
   const iy = ix + 1
@@ -44,7 +38,6 @@ export default function createNormalizer (maxSize) {
   const lineB = createVec2()
   const tangent = createVec2()
   const miter = createVec2()
-  const miterLengths = createVec2()
 
   const normals = createFloatBuffer(maxSize * 2)
   const miters = createFloatBuffer(maxSize)
