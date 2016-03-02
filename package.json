@@ -26,8 +26,8 @@
     "inherits": "^2.0.1"
   },
   "scripts": {
-    "start": "budo test-2d.js --live -- -t [ babelify --presets [ es2015 ] ]",
-    "test": "budo test-2d.js"
+    "start": "budo test/test-pack-2d.js --title polyline-normals --live -- -t [ babelify --presets [ es2015 ] ]",
+    "test": "budo test/test-pack-2d.js"
   },
   "keywords": [
     "polyline",

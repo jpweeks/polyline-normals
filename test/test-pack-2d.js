@@ -4,7 +4,7 @@ import vec from 'gl-vec2'
 import arc from 'arc-to'
 import curve from 'adaptive-bezier-curve'
 import pack from 'array-pack-2d'
-import createNormalizer from './'
+import { createNormalizer } from '../'
 
 const paths = [
   { path: [[40, 40], [80, 30], [80, 60], [125, 33], [115, 100], [50, 120], [70, 150]] },
