@@ -28,6 +28,12 @@ function copyFromVec2 (bufferOut, vectorIn, i) {
   return bufferOut
 }
 
+/**
+  Create an interface for calculating normals and miters from path positions.
+
+  @method createNormalizer
+  @param {Int} maxSize  Maximum number of points to be calculated
+*/
 export default function createNormalizer (maxSize) {
   const cur = createVec2()
   const prev = createVec2()
@@ -39,10 +45,19 @@ export default function createNormalizer (maxSize) {
   const tangent = createVec2()
   const miter = createVec2()
 
+  /**
+    @property normals
+    @type Float32Array (Vec2)
+  */
   const normals = createFloatBuffer(maxSize * 2)
-  const miters = createFloatBuffer(maxSize)
-  let normalIndex, miterIndex
 
+  /**
+    @property miters
+    @type Float32Array
+  */
+  const miters = createFloatBuffer(maxSize)
+
+  let normalIndex, miterIndex
   function resetBufferIndices () {
     normalIndex = 0
     miterIndex = 0
@@ -54,7 +69,7 @@ export default function createNormalizer (maxSize) {
     miters[miterIndex++] = length
   }
 
-  function computeSegment (points, size, ai, bi, ci) {
+  function computeSegmentNormal (points, size, ai, bi, ci) {
     const hasNext = ai < size - 1
 
     copyToVec2(cur, points, ai)
@@ -92,16 +107,24 @@ export default function createNormalizer (maxSize) {
     miters[ai] = miterLen
   }
 
-  function update (points, closed) {
-    const size = points.length / 2
-    resetBufferIndices()
+  /**
+    Update normals and miters from path positions.
 
+    @method update
+    @param {Array} positions  Flat array of path positions
+    @param {Bool}  isClosed   Set to calculate miters for closed path
+  */
+  function update (positions, isClosed) {
+    const size = positions.length / 2
+    if (size > maxSize) throw new Error('positions array contains more points than maxSize')
+
+    resetBufferIndices()
     for (let i = 1; i < size; i++) {
-      computeSegment(points, size, i, i - 1, i + 1)
+      computeSegmentNormal(positions, size, i, i - 1, i + 1)
     }
-    if (size > 2 && closed) {
-      correctClosedNormal(points, size, 0, size - 1, 1)
-      correctClosedNormal(points, size, size - 1, size - 2, 0)
+    if (size > 2 && isClosed) {
+      correctClosedNormal(positions, size, 0, size - 1, 1)
+      correctClosedNormal(positions, size, size - 1, size - 2, 0)
     }
   }
 
